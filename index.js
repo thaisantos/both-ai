@@ -1,5 +1,6 @@
 // Both AI - v1
 // Main entry point - Complete and Operational
+// Helping do bem, de casa
 
 const express = require('express');
 const dotenv = require('dotenv');
@@ -29,7 +30,8 @@ app.get('/api/v1/status', (req, res) => {
     service: 'Both AI',
     version: '1.0.0',
     status: 'operational',
-    environment: process.env.NODE_ENV || 'development'
+    environment: process.env.NODE_ENV || 'development',
+    mission: 'Helping do bem, de casa'
   });
 });
 
@@ -63,11 +65,12 @@ app.use((req, res) => {
   res.status(404).json({ error: 'Not Found' });
 });
 
-// Start server
+// Start server (only if this file is run directly)
 if (require.main === module) {
   app.listen(PORT, () => {
     console.log(`🚀 Both AI v1.0.0 is running on port ${PORT}`);
     console.log(`✅ Service Status: OPERATIONAL`);
+    console.log(`💚 Mission: Helping do bem, de casa`);
     console.log(`📍 Health Check: http://localhost:${PORT}/health`);
   });
 }
