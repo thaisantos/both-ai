@@ -4,6 +4,7 @@
 
 const express = require('express');
 const dotenv = require('dotenv');
+const { getQuickReply } = require('./both-ai-v1-quick-replies');
 
 // Load environment variables
 dotenv.config();
