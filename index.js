@@ -65,6 +65,19 @@ app.use((req, res) => {
   res.status(404).json({ error: 'Not Found' });
 });
 
+const { getQuickReply } = require('./src/both-ai-v1-quick-replies');
+
+// Nova rota só pra resposta rápida
+app.post('/api/v1/whatsapp/message', (req, res) => {
+  const { message, nome } = req.body;
+  const reply = getQuickReply(message, nome);
+  res.json({ reply, version: "v1", status: "operational" });
+});
+
+app.get('/api/v1/quick-replies', (req, res) => {
+  res.json(Object.keys(require('./src/both-ai-v1-quick-replies').quickReplies));
+});
+
 // Start server (only if this file is run directly)
 if (require.main === module) {
   app.listen(PORT, () => {
