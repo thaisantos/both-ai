@@ -27,7 +27,20 @@ const FB_APP_SECRET = process.env.FB_APP_SECRET || "";
 const VERIFY_TOKEN = process.env.VERIFY_TOKEN || "both-ai-v1-nois";
 const WHATSAPP_TOKEN = process.env.WHATSAPP_TOKEN || "";
 
-const REDIRECT_URI = `${BASE_URL}/auth/facebook/callback`;
+// Build the real origin from the incoming request so the redirect_uri always
+// matches the domain the user is actually on (works on any Vercel URL / custom
+// domain). An explicit PUBLIC_URL env var overrides everything if set.
+function getBaseUrl(req) {
+  if (process.env.PUBLIC_URL) return process.env.PUBLIC_URL.replace(/\/$/, "");
+  const proto = (req.headers["x-forwarded-proto"] || "https").split(",")[0].trim();
+  const host = req.headers["x-forwarded-host"] || req.headers.host;
+  if (host) return `${proto}://${host}`;
+  return BASE_URL;
+}
+
+function getRedirectUri(req) {
+  return `${getBaseUrl(req)}/auth/facebook/callback`;
+}
 
 // Middleware
 app.use(cors());
@@ -92,10 +105,15 @@ app.get("/logout", (_req, res) => {
 // ---------------------------------------------------------------------------
 
 // GET /auth/facebook -> redirect to the Facebook OAuth dialog
-app.get("/auth/facebook", (_req, res) => {
+app.get("/auth/facebook", (req, res) => {
+  if (!FB_APP_ID) {
+    return res
+      .status(500)
+      .send("FB_APP_ID nao configurado. Defina as variaveis de ambiente no Vercel.");
+  }
   const params = new URLSearchParams({
     client_id: FB_APP_ID,
-    redirect_uri: REDIRECT_URI,
+    redirect_uri: getRedirectUri(req),
     scope: "public_profile,email",
     response_type: "code",
   });
@@ -178,7 +196,7 @@ app.get("/auth/facebook/callback", async (req, res) => {
     const tokenParams = new URLSearchParams({
       client_id: FB_APP_ID,
       client_secret: FB_APP_SECRET,
-      redirect_uri: REDIRECT_URI,
+      redirect_uri: getRedirectUri(req),
       code: String(code),
     });
     const tokenRes = await fetch(
@@ -269,12 +287,12 @@ app.post("/webhook", (req, res) => {
 // Debug + health
 // ---------------------------------------------------------------------------
 
-app.get("/debug", (_req, res) => {
+app.get("/debug", (req, res) => {
   res.json({
     status: "OK",
     service: "Both.AI",
-    baseUrl: BASE_URL,
-    redirectUri: REDIRECT_URI,
+    baseUrl: getBaseUrl(req),
+    redirectUri: getRedirectUri(req),
     env: {
       FB_APP_ID: Boolean(FB_APP_ID),
       FB_APP_SECRET: Boolean(FB_APP_SECRET),
