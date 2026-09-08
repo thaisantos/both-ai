@@ -1,0 +1,25 @@
+{
+  "name": "both-ai-whatsapp-facebook",
+  "version": "1.0.0",
+  "description": "Both.AI - WhatsApp Bot + Facebook Login (Express, deploy on Vercel)",
+  "main": "index.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js"
+  },
+  "keywords": ["both-ai", "whatsapp", "facebook-login", "express", "vercel"],
+  "author": "thaisantos",
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.4"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
