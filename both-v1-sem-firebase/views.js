@@ -62,19 +62,30 @@ function layout({ title, body }) {
 }
 
 // GET / -> landing page with Facebook JS SDK + <fb:login-button>
-function landingPage({ fbAppId, whatsappConfigured }) {
-  const body = `
-    <h1>Both.AI</h1>
-    <p>Bot de WhatsApp + Login com Facebook. Ajudando do bem, de casa.</p>
-
-    <div id="fb-root"></div>
-    <fb:login-button
+function landingPage({ fbAppId, fbConfigId, whatsappConfigured }) {
+  // Login for Business uses config_id; classic login uses scope.
+  const loginButton = fbConfigId
+    ? `<fb:login-button
+      config_id="${fbConfigId}"
+      onlogin="checkLoginState();"
+      data-size="large"
+      data-button-type="continue_with"
+      data-use-continue-as="true">
+    </fb:login-button>`
+    : `<fb:login-button
       scope="public_profile,email"
       onlogin="checkLoginState();"
       data-size="large"
       data-button-type="continue_with"
       data-use-continue-as="true">
-    </fb:login-button>
+    </fb:login-button>`;
+
+  const body = `
+    <h1>Both.AI</h1>
+    <p>Bot de WhatsApp + Login com Facebook. Ajudando do bem, de casa.</p>
+
+    <div id="fb-root"></div>
+    ${loginButton}
 
     <p style="margin-top:16px">
       Ou <a href="/auth/facebook">entrar via OAuth (server-side)</a>

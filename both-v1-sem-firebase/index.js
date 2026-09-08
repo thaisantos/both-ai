@@ -24,6 +24,7 @@ const PORT = process.env.PORT || 3000;
 // Environment variables
 const FB_APP_ID = process.env.FB_APP_ID || "";
 const FB_APP_SECRET = process.env.FB_APP_SECRET || "";
+const FB_CONFIG_ID = process.env.FB_CONFIG_ID || ""; // Login for Business config
 const VERIFY_TOKEN = process.env.VERIFY_TOKEN || "both-ai-v1-nois";
 const WHATSAPP_TOKEN = process.env.WHATSAPP_TOKEN || "";
 
@@ -80,9 +81,13 @@ function getSessionUser(req) {
 // ---------------------------------------------------------------------------
 
 app.get("/", (_req, res) => {
-  res
-    .type("html")
-    .send(landingPage({ fbAppId: FB_APP_ID, whatsappConfigured: Boolean(WHATSAPP_TOKEN) }));
+  res.type("html").send(
+    landingPage({
+      fbAppId: FB_APP_ID,
+      fbConfigId: FB_CONFIG_ID,
+      whatsappConfigured: Boolean(WHATSAPP_TOKEN),
+    })
+  );
 });
 
 app.get("/dashboard", (req, res) => {
@@ -296,6 +301,7 @@ app.get("/debug", (req, res) => {
     env: {
       FB_APP_ID: Boolean(FB_APP_ID),
       FB_APP_SECRET: Boolean(FB_APP_SECRET),
+      FB_CONFIG_ID: Boolean(FB_CONFIG_ID),
       VERIFY_TOKEN: Boolean(VERIFY_TOKEN),
       WHATSAPP_TOKEN: Boolean(WHATSAPP_TOKEN),
     },
