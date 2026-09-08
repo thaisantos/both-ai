@@ -94,13 +94,40 @@ function landingPage({ fbAppId, whatsappConfigured }) {
           xfbml: true,
           version: 'v21.0'
         });
+        FB.getLoginStatus(function (response) {
+          statusChangeCallback(response);
+        });
       };
+
+      // Called by <fb:login-button onlogin="checkLoginState();">
       function checkLoginState() {
         FB.getLoginStatus(function (response) {
-          if (response.status === 'connected') {
-            window.location.href = '/dashboard';
-          }
+          statusChangeCallback(response);
         });
+      }
+
+      // When the user is connected on the client, hand the access token to the
+      // server so it can create the session cookie, then open the dashboard.
+      function statusChangeCallback(response) {
+        if (response.status === 'connected' && response.authResponse) {
+          var accessToken = response.authResponse.accessToken;
+          fetch('/auth/facebook/token', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ accessToken: accessToken })
+          })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+              if (data && data.ok) {
+                window.location.href = '/dashboard';
+              } else {
+                console.error('[both-ai] server session failed', data);
+              }
+            })
+            .catch(function (err) {
+              console.error('[both-ai] token exchange error', err);
+            });
+        }
       }
     </script>
     <script async defer crossorigin="anonymous"
