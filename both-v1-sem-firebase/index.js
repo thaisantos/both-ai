@@ -102,6 +102,66 @@ app.get("/auth/facebook", (_req, res) => {
   res.redirect(`https://www.facebook.com/v21.0/dialog/oauth?${params.toString()}`);
 });
 
+// POST /auth/facebook/token -> client-side JS SDK login.
+// The browser (FB.getLoginStatus) sends the accessToken; we verify it against
+// the Graph API, load the profile and set the same session cookie used by the
+// server-side OAuth flow.
+app.post("/auth/facebook/token", async (req, res) => {
+  const accessToken = req.body && req.body.accessToken;
+  if (!accessToken) {
+    return res.status(400).json({ ok: false, error: "Missing accessToken" });
+  }
+
+  try {
+    // Optional but recommended: verify the token belongs to THIS app.
+    if (FB_APP_ID && FB_APP_SECRET) {
+      const appToken = `${FB_APP_ID}|${FB_APP_SECRET}`;
+      const debugParams = new URLSearchParams({
+        input_token: accessToken,
+        access_token: appToken,
+      });
+      const debugRes = await fetch(
+        `https://graph.facebook.com/debug_token?${debugParams.toString()}`
+      );
+      const debugData = await debugRes.json();
+      const info = debugData && debugData.data;
+      if (!info || !info.is_valid || String(info.app_id) !== String(FB_APP_ID)) {
+        console.error("[both-ai] token verification failed:", debugData);
+        return res.status(401).json({ ok: false, error: "Invalid access token" });
+      }
+    }
+
+    // Load the profile with the user-provided token.
+    const profileParams = new URLSearchParams({
+      fields: "id,name,email,picture",
+      access_token: accessToken,
+    });
+    const profileRes = await fetch(
+      `https://graph.facebook.com/v21.0/me?${profileParams.toString()}`
+    );
+    const profile = await profileRes.json();
+
+    if (!profileRes.ok || !profile.id) {
+      console.error("[both-ai] profile fetch failed:", profile);
+      return res.status(500).json({ ok: false, error: "Failed to load profile" });
+    }
+
+    const session = {
+      id: profile.id,
+      name: profile.name,
+      email: profile.email || null,
+    };
+    const cookie = `both_session=${encodeURIComponent(
+      JSON.stringify(session)
+    )}; Path=/; HttpOnly; SameSite=Lax; Max-Age=604800`;
+    res.setHeader("Set-Cookie", cookie);
+    res.json({ ok: true, user: session });
+  } catch (err) {
+    console.error("[both-ai] /auth/facebook/token error:", err);
+    res.status(500).json({ ok: false, error: "Internal error" });
+  }
+});
+
 // GET /auth/facebook/callback -> exchange code, load profile, set session
 app.get("/auth/facebook/callback", async (req, res) => {
   const { code, error, error_description: errorDescription } = req.query;
